@@ -1,6 +1,8 @@
+from locale import currency
 import lxml.html
 import re
 import scrapy
+from datetime import datetime
 
 from typing import Union
 from logging import LoggerAdapter
@@ -8,7 +10,7 @@ from logging import LoggerAdapter
 from deepbnb.api.ApiBase import ApiBase
 from deepbnb.api.PdpReviews import PdpReviews
 from deepbnb.items import DeepbnbItem
-
+from deepbnb.api.ExploreSearch import ExploreSearch
 
 class PdpPlatformSections(ApiBase):
     """Airbnb API v3 Property Display Endpoint"""
@@ -24,18 +26,21 @@ class PdpPlatformSections(ApiBase):
 
     def __init__(
             self,
+            query,
             api_key: str,
             logger: LoggerAdapter,
             currency: str,
             data_cache: dict,
             geography: dict,
-            pdp_reviews: PdpReviews
+            pdp_reviews: PdpReviews,
+            **kwargs
     ):
-        super().__init__(api_key, logger, currency)
+        super().__init__(api_key, logger, currency, **kwargs)
         self.__data_cache = data_cache
         self.__geography = geography
         self.__regex_amenity_id = re.compile(r'^([a-z0-9]+_)+([0-9]+)_')
         self.__pdp_reviews = pdp_reviews
+        self.__query = query
 
     def api_request(self, listing_id: str):
         """Generate scrapy.Request for listing page."""
@@ -168,7 +173,11 @@ class PdpPlatformSections(ApiBase):
             # summary=listing['sectioned_description']['summary'],
             total_price=listing_data_cached['total_price'],
             url="https://www.airbnb.com/rooms/{}".format(listing_id),
-            weekly_price_factor=listing_data_cached['weekly_price_factor']
+            weekly_price_factor=listing_data_cached['weekly_price_factor'],
+
+            currency = self._currency,
+            scrape_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            search_term = self.__query
         )
 
         self._get_detail_property(item, 'transit', 'Getting around', location['seeAllLocationDetails'], 'content')

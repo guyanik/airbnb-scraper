@@ -1,6 +1,6 @@
 import scrapy
 
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 from elasticsearch_dsl.index import Index
 
 from deepbnb.api.ExploreSearch import ExploreSearch
@@ -100,6 +100,7 @@ class AirbnbSpider(scrapy.Spider):
             self.__query
         )
         self.__pdp_platform_sections = PdpPlatformSections(
+            self.__query,
             api_key,
             self.logger,
             self.__currency,
@@ -183,6 +184,8 @@ class AirbnbSpider(scrapy.Spider):
             'room_type':              listing['roomType'],
             'room_type_category':     listing['roomTypeCategory'],
             'star_rating':            listing['starRating'],
+
+            'search_term':            self.__query,
 
             # get pricing data
             'monthly_price_factor':   pricing['monthlyPriceFactor'],

@@ -5,6 +5,7 @@
 # See documentation in:
 # http://doc.scrapy.org/en/latest/topics/items.html
 
+from locale import currency
 import scrapy
 
 
@@ -60,3 +61,6 @@ class DeepbnbItem(scrapy.Item):
     transit = scrapy.Field()
     url = scrapy.Field()
     weekly_price_factor = scrapy.Field()
+    currency = scrapy.Field()
+    search_term = scrapy.Field()
+    scrape_time = scrapy.Field()
