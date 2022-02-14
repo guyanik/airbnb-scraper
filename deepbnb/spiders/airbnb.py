@@ -2,6 +2,7 @@ import scrapy
 
 from datetime import date, timedelta, datetime
 from elasticsearch_dsl.index import Index
+from sklearn import neighbors
 
 from deepbnb.api.ExploreSearch import ExploreSearch
 from deepbnb.api.PdpPlatformSections import PdpPlatformSections

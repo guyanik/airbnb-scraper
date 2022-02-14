@@ -1,5 +1,8 @@
 __pycache__/
 .idea/
+#/deepbnb/settings.py
+/town.py
 /env
 *.csv
 *.xlsx
+*.txt
