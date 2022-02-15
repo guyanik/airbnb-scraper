@@ -3,6 +3,6 @@ __pycache__/
 #/deepbnb/settings.py
 /town.py
 /env
-*.csv
+#*.csv
 *.xlsx
 au-town-urls.txt
