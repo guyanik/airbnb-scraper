@@ -177,7 +177,8 @@ class PdpPlatformSections(ApiBase):
 
             currency = self._currency,
             scrape_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            search_term = self.__query
+            search_term = self.__query,
+            town = self.__query.split(', ')[0]
         )
 
         self._get_detail_property(item, 'transit', 'Getting around', location['seeAllLocationDetails'], 'content')

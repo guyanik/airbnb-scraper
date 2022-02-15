@@ -36,7 +36,7 @@ NEWSPIDER_MODULE = 'deepbnb.spiders'
 # }
 
 # Public development key (get this from the 'key' url parameter in async requests to /api/v2/explore_tabs)
-AIRBNB_API_KEY = ''
+AIRBNB_API_KEY = 'd306zoyjsyarp7ifhu67rjxn52tv0t20'
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 USER_AGENT = 'deepbnb (https://airbnb-scraper)'
@@ -93,7 +93,7 @@ ITEM_PIPELINES = {
 
 # https://docs.scrapy.org/en/latest/topics/feed-exports.html
 FEED_EXPORTERS = {
-    'xlsx': 'deepbnb.exporter.XlsxItemExporter',
+    'headless': 'deepbnb.exporter.HeadlessCsvItemExporter',
 }
 
 FEED_EXPORT_FIELDS = [
@@ -133,7 +133,11 @@ FEED_EXPORT_FIELDS = [
     'id',
     'currency',
     'search_term',
-    'scrape_time'
+    'scrape_time',
+    'town',
+    'city',
+    'state',
+    'country'
 ]
 
 # Minimum monthly discount percent
@@ -187,7 +191,7 @@ AUTOTHROTTLE_DEBUG = False
 # HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
 
 ROTATING_PROXY_LIST = [
-    ''
+    '5.79.73.131:13200'
 ]
 
 DOWNLOADER_MIDDLEWARES = {
