@@ -36,7 +36,7 @@ NEWSPIDER_MODULE = 'deepbnb.spiders'
 # }
 
 # Public development key (get this from the 'key' url parameter in async requests to /api/v2/explore_tabs)
-AIRBNB_API_KEY = 'd306zoyjsyarp7ifhu67rjxn52tv0t20'
+AIRBNB_API_KEY = ''
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 USER_AGENT = 'deepbnb (https://airbnb-scraper)'
@@ -191,7 +191,7 @@ AUTOTHROTTLE_DEBUG = False
 # HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
 
 ROTATING_PROXY_LIST = [
-    '5.79.73.131:13200'
+    ''
 ]
 
 DOWNLOADER_MIDDLEWARES = {
