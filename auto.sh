@@ -1,6 +1,6 @@
 #!/bin/bash
 input="towns.txt"
-now=$(date -u +'%Y-%m-%d')
+now=$(date +'%Y-%m-%d')
 while IFS= read -r line
 do
   echo "$line"

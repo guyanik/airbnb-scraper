@@ -36,7 +36,7 @@ NEWSPIDER_MODULE = 'deepbnb.spiders'
 # }
 
 # Public development key (get this from the 'key' url parameter in async requests to /api/v2/explore_tabs)
-AIRBNB_API_KEY = ''
+AIRBNB_API_KEY = 'd306zoyjsyarp7ifhu67rjxn52tv0t20'
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 USER_AGENT = 'deepbnb (https://airbnb-scraper)'
@@ -147,7 +147,7 @@ FEED_EXPORT_FIELDS = [
 # MINIMUM_WEEKLY_DISCOUNT = 0
 
 # Minimum photos per listing
-MINIMUM_PHOTOS = 2
+# MINIMUM_PHOTOS = 2
 
 # Default currency
 # DEFAULT_CURRENCY = 'BRL'
@@ -164,7 +164,7 @@ PROPERTY_AMENITIES = {
 
 ROOM_TYPES = []
 # Blacklisted property types
-PROPERTY_TYPE_BLACKLIST = ['Camper/RV', 'Campsite', 'Entire guest suite']
+# PROPERTY_TYPE_BLACKLIST = ['Camper/RV', 'Campsite', 'Entire guest suite']
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See http://doc.scrapy.org/en/latest/topics/autothrottle.html
@@ -191,7 +191,7 @@ AUTOTHROTTLE_DEBUG = False
 # HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
 
 ROTATING_PROXY_LIST = [
-    ''
+    '5.79.73.131:13200'
 ]
 
 DOWNLOADER_MIDDLEWARES = {

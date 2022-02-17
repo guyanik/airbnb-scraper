@@ -1,6 +1,6 @@
 __pycache__/
 .idea/
-#/deepbnb/settings.py
+/deepbnb/settings.py
 /town.py
 /env
 #*.csv
