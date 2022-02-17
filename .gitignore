@@ -6,3 +6,5 @@ __pycache__/
 #*.csv
 *.xlsx
 au-town-urls.txt
+steps.txt
+towns.csv
