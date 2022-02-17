@@ -5,6 +5,6 @@ __pycache__/
 /env
 #*.csv
 *.xlsx
-au-town-urls.txt
-steps.txt
-towns.csv
+/au-town-urls.txt
+/steps.txt
+/towns.csv
