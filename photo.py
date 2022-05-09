@@ -1,9 +1,35 @@
 import pandas as pd
 import os
+import csv
+import json
 
-filename = sorted(os.listdir('weekly'))[-1]
-df = pd.read_csv("weekly/" + filename)
-df_photo = df[['id', 'photos']].drop('photos', axis=1).join(df['photos'].str.split(",", expand=True).stack().reset_index(level=1, drop=True).rename('photo'))
-#df_photo = df[['id']]#.join(df['photos'].str.split('?im_w=720,', expand=True))
-df_photo.set_index('id', inplace=True)
-df_photo.to_csv("weekly/" + filename[:-4] + "-photo.csv")
+filename = "2022-05-06-nz.xlsx"
+df = pd.read_excel("weekly/" + filename)
+print(len(set(df["id"])))
+
+df.drop_duplicates(subset='id', inplace = True)
+# # df_excess = pd.read_excel("weekly/rotorua-nz-0.xlsx")
+# # print(len(set(list(df['id']) + list(df_excess['id']))))
+
+df = df.replace('\u2028', ' ', regex=True).replace('\u2029', ' ', regex=True)
+df = df.replace('\n', ' ', regex=True).replace('\r', ' ', regex=True).replace('\r\n', ' ', regex=True)
+
+# # # create and save a file with reviews and IDs
+# # df_reviews = df[['id', 'reviews']].drop('reviews', axis=1).join(df['reviews'].str.split("f07dy8y53xri9yk7zkin", expand=True).stack().reset_index(level=1, drop=True).rename('reviews'))
+# # df_reviews[['text', 'date', 'language', 'score', 'response']] = df_reviews['reviews'].str.split("l1tl05cdej5bvhx5ypsr", expand=True)
+# # df_reviews['id'] = df_reviews['id'].astype(str)
+# # df_reviews = df_reviews.drop(['reviews'], axis=1)
+# # df_reviews.to_csv("weekly/" + filename[:-5] + "-reviews.csv", index = False)
+# # print(df_reviews.dtypes)
+
+# create and save a file with only photos and IDs
+df_photos = df[['id', 'photos']].drop('photos', axis=1).join(df['photos'].str.split(",", expand=True).stack().reset_index(level=1, drop=True).rename('photo'))
+df_photos['id'] = df_photos['id'].astype(str)
+df_photos.to_csv("weekly/" + filename[:-5] + "-photos.csv", index = False)
+print(df_photos.dtypes)
+
+# save the file without reviews and photos
+df = df.drop(['photos'], axis=1)
+df['id'] = df['id'].astype(str)
+df.to_csv("weekly/" + filename[:-5] + "-clean.csv", index = False)
+print(df.dtypes)

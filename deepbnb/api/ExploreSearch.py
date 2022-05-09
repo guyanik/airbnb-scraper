@@ -6,6 +6,7 @@ from datetime import date, timedelta
 from logging import LoggerAdapter
 from scrapy import Spider
 from urllib.parse import parse_qs, urlparse
+from scrapy.selector import Selector
 
 from deepbnb.api.ApiBase import ApiBase
 
@@ -25,6 +26,7 @@ class ExploreSearch(ApiBase):
     ):
         super().__init__(api_key, logger, currency)
         self.__geography = geography
+        self.__pagination = None
         self.__room_types = room_types
         self.__query = query
         self.__spider = spider
@@ -39,9 +41,13 @@ class ExploreSearch(ApiBase):
 
         if 'priceMax' in variables:
             params['priceMax'] = variables['priceMax']
+        else:
+            params['priceMax'] = None
 
         if 'priceMin' in variables:
             params['priceMin'] = variables['priceMin']
+        else:
+            params['priceMin'] = None
 
         if 'ne_lat' in parsed_qs:
             params['ne_lat'] = parsed_qs['ne_lat'][0]
@@ -67,32 +73,63 @@ class ExploreSearch(ApiBase):
     def get_paginated_search_params(self, response, data):
         """Consolidate search parameters and return result."""
         metadata = data['data']['dora']['exploreV3']['metadata']
-        pagination = metadata['paginationMetadata']
+        self.__pagination = data['data']['dora']['exploreV3']['metadata']['paginationMetadata']
+        # self._logger.info(f"Pagination:\n{self.__pagination}")
         filter_state = data['data']['dora']['exploreV3']['filters']['state']
 
-        place_id = self.__geography.get('place_id', metadata['geography']['placeId'])
-        query = [fs['value']['stringValue'] for fs in filter_state if fs['key'] == 'query'][0]
+        try:
+            place_id = self.__geography.get('place_id', metadata['geography']['placeId'])
+            query = [fs['value']['stringValue'] for fs in filter_state if fs['key'] == 'query'][0]
 
-        params = {'placeId': place_id, 'query': query}
-        if pagination['hasNextPage']:
-            params['lastSearchSessionId'] = pagination['searchSessionId']
+            params = {'placeId': place_id, 'query': query}
+            if self.__pagination['hasNextPage']:
+                params['lastSearchSessionId'] = self.__pagination['searchSessionId']
 
-        self.add_search_params(params, response)
+            self.add_search_params(params, response)
+        except Exception as e:
+            self._logger.info(f"No search result: {e}")
+            params = {}
 
         return params
 
     def parse_landing_page(self, response):
         """Parse search response and generate URLs for all searches, then perform them."""
         data = self.read_data(response)
-        search_params = self.get_paginated_search_params(response, data)
+        params = self.get_paginated_search_params(response, data)
+
         # neighborhoods = self._get_neighborhoods(data)
+        # self._logger.info(f"Neighborhoods:\n{neighborhoods}")
 
-        self.__geography.update(data['data']['dora']['exploreV3']['metadata']['geography'])
+        try:
+            self.__geography.update(data['data']['dora']['exploreV3']['metadata']['geography'])
+            # self._logger.info(f"Geography:\n{self.__geography}")
+        except Exception as e:
+            self._logger.info(f"No geography: {e}")
 
-        self._logger.info(f"Geography:\n{self.__geography}")
-        # self.logger.info(f"Neighborhoods:\n{neighborhoods}")
+        # # open a selector instance
+        # selector = Selector(response)
 
-        yield self.api_request(self.__query, search_params, self.__spider.parse, response)
+        # # check if the page returned anything
+        # if not selector.xpath('//*[@data-section-id="EXPLORE_HEADER_LOGO"]'):
+        #     self._logger.info(f"No results found for {self.__query} price range: {params['priceMin']} - {params['priceMax']}")
+        #     yield self.api_request(self.__query, params, self.__spider.parse, response).replace(dont_filter=True)
+        # else:
+        # # dynamic price range for results with 300+ listings
+        #     if 300 < int(self.__pagination['totalCount']):
+        #         min_price = params['priceMin']
+        #         max_price = params['priceMax']
+        #         avg_price = (min_price + max_price) // 2
+
+        #         params['priceMin'] = min_price
+        #         params['priceMax'] = avg_price
+        #         yield self.api_request(self.__query, params, self.__spider.parse, response)
+
+        #         params['priceMin'] = avg_price
+        #         params['priceMax'] = max_price
+        #         yield self.api_request(self.__query, params, self.__spider.parse, response)
+        #     else:
+        #         yield self.api_request(self.__query, params, self.__spider.parse, response)
+        yield self.api_request(self.__query, params, self.__spider.parse, response)
 
     def perform_checkin_start_requests(
             self,
@@ -142,6 +179,7 @@ class ExploreSearch(ApiBase):
                 for j in range(checkout_range.days + 1):  # + 1 to include end date
                     params['checkout'] = str(checkout_start_date + timedelta(days=j))
                     yield self.api_request(self.__query, params, self.parse_landing_page)
+    
 
     @staticmethod
     def _build_date_range(iso_date: str, range_spec: str):

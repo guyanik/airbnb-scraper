@@ -1,14 +1,22 @@
+from urllib import response
 import scrapy
 
 from datetime import date, timedelta, datetime
 from elasticsearch_dsl.index import Index
 from sklearn import neighbors
+from logging import LoggerAdapter
+from scrapy.selector import Selector
+from scrapy.http import HtmlResponse
 
 from deepbnb.api.ExploreSearch import ExploreSearch
 from deepbnb.api.PdpPlatformSections import PdpPlatformSections
 from deepbnb.api.PdpReviews import PdpReviews
 from deepbnb.model import Listing
+from pprint import pprint
+import pandas as pd
 
+df = pd.read_csv('rotorua-false-avail.csv')
+id_list = list(df['ABNB_id'])
 
 class AirbnbSpider(scrapy.Spider):
     """Airbnb Spider
@@ -19,9 +27,9 @@ class AirbnbSpider(scrapy.Spider):
 
     name = 'airbnb'
     allowed_domains = ['airbnb.com']
-    default_currency = 'USD'
-    default_max_price = 3000
-    default_price_increment = 100
+    default_currency = 'NZD'
+    default_max_price = 1000
+    default_price_increment = 40
     price_range = (0, default_max_price, default_price_increment)
     page_limit = 20
 
@@ -61,32 +69,48 @@ class AirbnbSpider(scrapy.Spider):
     def parse(self, response, **kwargs):
         """Default parse method."""
         data = self.__explore_search.read_data(response)
-
-        # Handle pagination
-        next_section = {}
         pagination = data['data']['dora']['exploreV3']['metadata']['paginationMetadata']
-        if pagination['hasNextPage']:
-            items_offset = pagination['itemsOffset']
-            self.__explore_search.add_search_params(next_section, response)
-            next_section.update({'itemsOffset': items_offset})
-
-            yield self.__explore_search.api_request(self.__query, next_section, response=response)
-
-        # handle listings
-        params = {'key': self.__explore_search.api_key}
+        # self.logger.info(f"Pagination: {pagination['totalCount']}")
+        params = {}
         self.__explore_search.add_search_params(params, response)
-        listing_ids = self.__get_listings_from_sections(data['data']['dora']['exploreV3']['sections'])
-        for listing_id in listing_ids:  # request each property page
-            if listing_id in self.__ids_seen:
-                continue  # filter duplicates
 
-            self.__ids_seen.add(listing_id)
+        if 300 < int(pagination['totalCount']):
+            min_price = params['priceMin']
+            max_price = params['priceMax']
+            avg_price = (min_price + max_price) // 2
+            self.logger.info(f"split: {pagination['totalCount']} range: {min_price} - {max_price}")
 
-            yield self.__pdp_platform_sections.api_request(listing_id)
+            params['priceMin'] = min_price
+            params['priceMax'] = avg_price
+            yield self.__explore_search.api_request(self.__query, params, self.parse)
+
+            params['priceMin'] = avg_price
+            params['priceMax'] = max_price
+            yield self.__explore_search.api_request(self.__query, params, self.parse)
+        else:
+            # Handle pagination
+            next_section = {}
+            if pagination['hasNextPage']:
+                items_offset = pagination['itemsOffset']
+                self.__explore_search.add_search_params(next_section, response)
+                next_section.update({'itemsOffset': items_offset})
+                yield self.__explore_search.api_request(self.__query, next_section, response=response)
+            
+            params = {'key': self.__explore_search.api_key}
+            self.__explore_search.add_search_params(params, response)
+
+            self.logger.info(f'range: {params["priceMin"]} - {params["priceMax"]} paramsPagination: {pagination}')
+
+            # handle listings
+            listing_ids = self.__get_listings_from_sections(data['data']['dora']['exploreV3']['sections'])
+            self.logger.info(f'Found {len(listing_ids)} listings')
+
+            for listing_id in listing_ids:  # request each property page
+                yield self.__pdp_platform_sections.api_request(listing_id)
 
     def start_requests(self):
         """Spider entry point. Generate the first search request(s)."""
-        self.logger.info(f'starting survey for: {self.__query}')
+        # self.logger.info(f'starting survey for: {self.__query}')
         if 'deepbnb.pipelines.ElasticBnbPipeline' in self.settings.get('ITEM_PIPELINES'):
             self.__create_index_if_not_exists()
 
@@ -117,7 +141,7 @@ class AirbnbSpider(scrapy.Spider):
 
         if self.__price_min:
             params['priceMin'] = self.__price_min
-
+        
         if self.__ne_lat:
             params['ne_lat'] = self.__ne_lat
 
@@ -129,13 +153,33 @@ class AirbnbSpider(scrapy.Spider):
 
         if self.__sw_lng:
             params['sw_lng'] = self.__sw_lng
+        
+        # # price_list1 = list(range(self.price_range[0], self.price_range[1] + 1, self.price_range[2]))
 
-        if self.__checkin:  # assume self._checkout also
-            checkin, checkout, checkin_range_spec, checkout_range_spec = self._process_checkin_vars()
-            yield from self.__explore_search.perform_checkin_start_requests(
-                checkin, checkout, checkin_range_spec, checkout_range_spec, params)
-        else:
-            yield self.__explore_search.api_request(self.__query, params, self.__explore_search.parse_landing_page)
+        price_range_list = []
+        prices1 = list(range(10, 1601, 30))
+        prices2 = list(range(0, 1601, 40))
+        price_list1 = list(zip(prices1, prices1[1:]))
+        price_list2 = list(zip(prices2, prices2[1:]))
+        price_range_list = price_list1 + price_list2
+        price_range_list.append((1500, 50000))
+
+        # # create 4 lists each apart from the previous one by 8 and has increment as 32
+        # for i in range(2):
+        #     prices = list(range(i*8, 1537, 32))
+        #     price_list = list(zip(prices, prices[1:]))
+        #     price_range_list += price_list
+        # price_range_list.append((1500, 50000))
+
+        for min_price, max_price in price_range_list:
+            params['priceMin'] = min_price
+            params['priceMax'] = max_price
+            if self.__checkin:  # assume self._checkout also
+                checkin, checkout, checkin_range_spec, checkout_range_spec = self._process_checkin_vars()
+                yield from self.__explore_search.perform_checkin_start_requests(
+                    checkin, checkout, checkin_range_spec, checkout_range_spec, params)
+            else:
+                yield self.__explore_search.api_request(self.__query, params, self.__explore_search.parse_landing_page)
 
     @staticmethod
     def _get_neighborhoods(data):
@@ -224,7 +268,7 @@ class AirbnbSpider(scrapy.Spider):
                 # monthly rate and drop listing if it is greater. Use 28 days = 1 month. Assume price_max of 1000+ is a
                 # monthly price requirement.
                 if (self.__price_max and self.__price_max > 1000
-                        and pricing['rate_type'] != 'monthly'
+                        and pricing['rateType'] != 'monthly'
                         and (rate_with_service_fee_amt * 28) > self.__price_max):
                     continue
 

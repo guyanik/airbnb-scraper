@@ -22,6 +22,7 @@ class Listing(Document):
     description = Text()
     host_id = Integer(fields={'keyword': Keyword()})
     house_rules = Text()
+    id = Integer(fields={'keyword': Keyword()})
     interaction = Text()
     is_hotel = Boolean()
     monthly_price_factor = Float()

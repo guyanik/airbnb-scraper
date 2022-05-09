@@ -2,12 +2,16 @@
 import elasticsearch.exceptions
 import re
 import webbrowser
+import os
+import csv
+import pandas as pd
+import numpy as np
 
 from datetime import datetime
 
 from deepbnb.model import Listing
 from scrapy.exceptions import DropItem
-
+from itemadapter import ItemAdapter
 
 class BnbPipeline:
     @classmethod
@@ -183,7 +187,6 @@ class ElasticBnbPipeline:
 
         return item
 
-
 class DuplicatesPipeline:
     """Looks for duplicate items, and drops those items that were already processed
 
@@ -191,11 +194,26 @@ class DuplicatesPipeline:
     """
 
     def __init__(self):
-        self.ids_seen = set()
+        with open('locations-nz.txt') as f:
+            count = sum(1 for _ in f)
+        with open('locations-nz-copy.txt') as f:
+            count_copy = sum(1 for _ in f)
+        
+        if len(os.listdir('weekly')) != 0:
+            self.filepath = 'weekly/' + os.listdir('weekly')[-1]
+        try:
+            if count_copy < count and os.stat(self.filepath).st_size != 0:
+                df = pd.read_excel(self.filepath)
+                self.ids_seen = set(df['id'])
+            else:
+                self.ids_seen = set()
+        except Exception as e:
+            self.ids_seen = set()
 
     def process_item(self, item, spider):
-        if item['id'] in self.ids_seen:
-            raise DropItem("Duplicate item found: %s" % item)
+        adapter = ItemAdapter(item)
+        if np.int64(adapter['id']) in self.ids_seen:
+            raise DropItem(f"Duplicate item found:")
         else:
-            self.ids_seen.add(item['id'])
+            self.ids_seen.add(np.int64(adapter['id']))
             return item

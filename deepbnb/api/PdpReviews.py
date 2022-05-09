@@ -6,7 +6,6 @@ from urllib.parse import urlparse, parse_qs
 
 from deepbnb.api.ApiBase import ApiBase
 
-
 class PdpReviews(ApiBase):
     """Airbnb API v3 Reviews Endpoint"""
 
@@ -15,6 +14,9 @@ class PdpReviews(ApiBase):
         # get first batch of reviews
         reviews, n_reviews_total = self._get_reviews_batch(listing_id, limit, start_offset)
 
+        if n_reviews_total == 0:
+            return reviews
+        
         # get any additional batches
         start_idx = start_offset + limit
         for offset in range(start_idx, n_reviews_total, limit):
@@ -28,16 +30,21 @@ class PdpReviews(ApiBase):
         url = self._get_url(listing_id, limit, offset)
         headers = self._get_search_headers()
         response = requests.get(url, headers=headers)
-        data = json.loads(response.text)
-        pdp_reviews = data['data']['merlin']['pdpReviews']
-        n_reviews_total = int(pdp_reviews['metadata']['reviewsCount'])
-        reviews = [{
-            'comments':   r['comments'],
-            'created_at': r['createdAt'],
-            'language':   r['language'],
-            'rating':     r['rating'],
-            'response':   r['response'],
+        try:
+            data = json.loads(response.text)
+            pdp_reviews = data['data']['merlin']['pdpReviews']
+            n_reviews_total = int(pdp_reviews['metadata']['reviewsCount'])
+            reviews = [{
+                'comments':   r['comments'] if r['comments'] is not None else 'None',
+                'created_at': r['createdAt'] if r['createdAt'] is not None else 'None',
+                'language':   r['language'] if r['language'] is not None else 'None',
+                'rating':     r['rating'] if r['rating'] is not None else 'None',
+                'response':   r['response'] if r['response'] is not None else 'None',
         } for r in pdp_reviews['reviews']]
+            # print(f'Success id: {listing_id}')
+        except Exception as e:
+            print(f'Stupid fucking bug: {e} id: {listing_id}')
+            return [], 0
 
         return reviews, n_reviews_total
 

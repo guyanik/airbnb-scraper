@@ -1,18 +1,23 @@
 import openpyxl
+import csv
+import os
 
 from scrapy.exporters import BaseItemExporter, CsvItemExporter
+from scrapy.exceptions import DropItem
+
+class QuoteAllDialect(csv.excel):
+    quoting = csv.QUOTE_ALL
 
 class HeadlessCsvItemExporter(CsvItemExporter):
 
     def __init__(self, *args, **kwargs):
-
         # args[0] is (opened) file handler
         # if file is not empty then skip headers
         if args[0].tell() > 0:
             kwargs['include_headers_line'] = False
+        kwargs.update({'dialect': QuoteAllDialect})
 
         super(HeadlessCsvItemExporter, self).__init__(*args, **kwargs)
-
 
 class XlsxItemExporter(BaseItemExporter):
     """Export items to Excel spreadsheet."""
@@ -25,12 +30,19 @@ class XlsxItemExporter(BaseItemExporter):
 
         super().__init__(**kwargs)
 
+        self._filename = file.name
+
+        if file.tell() > 0:
+            include_headers_line = False
+            # filename = sorted(os.listdir('weekly'))[-1]
+            self._workbook = openpyxl.load_workbook(self._filename)
+        else:
+            self._workbook = openpyxl.workbook.Workbook()
+
         self.include_headers_line = include_headers_line
-        self._workbook = openpyxl.workbook.Workbook()
         self._worksheet = self._workbook.active
         self._headers_not_written = True
         self._join_multivalued = join_multivalued
-        self._filename = file.name
         file.close()
 
     def export_item(self, item):
@@ -39,8 +51,8 @@ class XlsxItemExporter(BaseItemExporter):
             self._write_headers_and_set_fields_to_export(item)
 
         # Make name into a hyperlink
-        item['name'] = '=HYPERLINK("https://www.airbnb.com/rooms/{}", "{}")'.format(
-            item['id'], item.get('name', item['id'])),
+        # item['name'] = '=HYPERLINK("https://www.airbnb.com/rooms/{}", "{}")'.format(
+        #     item['id'], item.get('name', item['id'])),
 
         fields = self._get_serialized_fields(item, default_value='', include_empty=True)
         values = tuple(self._build_row(x for _, x in fields))

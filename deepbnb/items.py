@@ -33,6 +33,8 @@ class DeepbnbItem(scrapy.Item):
     latitude = scrapy.Field()
     listing_expectations = scrapy.Field()
     longitude = scrapy.Field()
+    max_nights =scrapy.Field()
+    min_nights = scrapy.Field()
     monthly_price_factor = scrapy.Field()
     name = scrapy.Field()
     neighborhood_overview = scrapy.Field()
@@ -66,3 +68,7 @@ class DeepbnbItem(scrapy.Item):
     search_term = scrapy.Field()
     scrape_time = scrapy.Field()
     town = scrapy.Field()
+
+    def __repr__(self):
+        """only print out attr1 after exiting the Pipeline"""
+        return repr({"id": self["id"]})

@@ -1,9 +1,12 @@
 import json
+import random
 
 from abc import abstractmethod
 from logging import LoggerAdapter
 from urllib.parse import urlencode, urlunparse
 
+# from fake_useragent import UserAgent
+# ua = UserAgent()
 
 class ApiBase:
 
@@ -47,6 +50,8 @@ class ApiBase:
             'X-Airbnb-API-Key':          self._api_key,
             'X-Airbnb-GraphQL-Platform': 'web',
         }
+
+        user_agent = random.choice(list(open('user-agents.txt')))[:-1]
 
         return required_headers | {
             # configurable parameters:

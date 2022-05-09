@@ -1,10 +1,7 @@
 __pycache__/
 .idea/
 /deepbnb/settings.py
-/town.py
 /env
 #*.csv
 *.xlsx
-/au-town-urls.txt
 /steps.txt
-/towns.csv
