@@ -51,7 +51,7 @@ class ApiBase:
             'X-Airbnb-GraphQL-Platform': 'web',
         }
 
-        user_agent = random.choice(list(open('user-agents.txt')))[:-1]
+        # user_agent = random.choice(list(open('user-agents.txt')))[:-1]
 
         return required_headers | {
             # configurable parameters:

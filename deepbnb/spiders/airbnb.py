@@ -15,9 +15,6 @@ from deepbnb.model import Listing
 from pprint import pprint
 import pandas as pd
 
-df = pd.read_csv('rotorua-false-avail.csv')
-id_list = list(df['ABNB_id'])
-
 class AirbnbSpider(scrapy.Spider):
     """Airbnb Spider
 
@@ -157,11 +154,13 @@ class AirbnbSpider(scrapy.Spider):
         # # price_list1 = list(range(self.price_range[0], self.price_range[1] + 1, self.price_range[2]))
 
         price_range_list = []
-        prices1 = list(range(10, 1601, 30))
-        prices2 = list(range(0, 1601, 40))
+        prices1 = list(range(10, 1601, 20))
+        prices2 = list(range(10, 1601, 30))
+        prices3 = list(range(0, 1601, 40))
         price_list1 = list(zip(prices1, prices1[1:]))
         price_list2 = list(zip(prices2, prices2[1:]))
-        price_range_list = price_list1 + price_list2
+        price_list3 = list(zip(prices3, prices3[1:]))
+        price_range_list = price_list1 + price_list2 + price_list3
         price_range_list.append((1500, 50000))
 
         # # create 4 lists each apart from the previous one by 8 and has increment as 32
