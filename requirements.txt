@@ -41,6 +41,6 @@ service-identity==18.1.0
 six==1.15.0
 toml==0.10.2
 Twisted==21.2.0
-urllib3==1.26.4
+urllib3==1.26.17
 w3lib==1.22.0
 zope.interface==5.3.0
